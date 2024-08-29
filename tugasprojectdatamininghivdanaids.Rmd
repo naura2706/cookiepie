@@ -1,0 +1,242 @@
+---
+title: "ANALYSIS AIDS IN INDONESIA"
+author: "Kelompok 4 (Kayla Jasmine = 2702314170, Naura Shahieza Marasabessy = 2602192115, Chara Margareth Manalu = 2702311471, Ririn Saprina Kadang = 2702315715"
+date: "2024-04-02"
+output:
+    rmdformats::readthedown:
+    self_contained: true
+    thumbnails: true
+    lightbox: true
+    gallery: false
+    highlight: tango
+---
+
+
+# Import Libary
+
+```{r message = FALSE,warning=FALSE}
+# Data Wrangling
+
+library(tidyverse) # untuk menganalisa sturuktur dataset yaitu glimpse
+library(readr) # untuk read csv
+library(dplyr) # untuk mengolah data
+
+
+# Visualisasi
+library(ggplot2) # memvisualisasikan plot
+library(ggthemes) # untuk membuat tema visualisasi ggplot jadi lebih minimalist
+library(plotly)
+```
+
+
+# Background
+
+AIDS, atau acquired immunodeficiency syndrome, adalah penyakit kronis yang disebabkan oleh infeksi human immunodeficiency virus (HIV) yang merusak sistem kekebalan tubuh.
+
+ HIV adalah penyakit Infeksi Menular Seksual (IMS) yang juga dapat ditularkan melalui kontak dengan darah yang terinfeksi atau dari ibu ke anaknya pada saat hamil, melahirkan, atau menyusui.
+ 
+ Tanpa pengobatan, HIV memerlukan waktu bertahun-tahun untuk melemahkan sistem kekebalan tubuh dan menyebabkan AIDS.
+ 
+Tidak ada obat untuk HIV/AIDS, namun pengobatan dapat memperlambat perkembangan penyakit ini.
+Obat-obatan ini telah mengurangi kematian akibat AIDS di banyak negara maju.
+
+
+## Kolom Deskripsi
+
+* `Country`: Nama negara yang datanya ditampilkan.
+
+* `Year`:  Tahun data tersebut diambil (format 4 digit).
+
+* `Data.AIDS-Related Deaths.AIDS Orphans`: Jumlah anak di bawah 17 tahun yang menjadi yatim piatu karena orang tua mereka meninggal akibat AIDS.
+
+* `Data.AIDS-Related Deaths.Adults`: Jumlah orang dewasa (di atas 15 tahun) yang meninggal akibat AIDS.
+
+* `Data.AIDS-Related Deaths.All Ages`: Jumlah total kematian yang disebabkan oleh AIDS pada tahun ini.
+
+* `Data.AIDS-Related Deaths.Children`: Jumlah anak di bawah 14 tahun yang meninggal akibat AIDS.
+
+* `Data.AIDS-Related Deaths.Female Adults`: Jumlah perempuan dewasa (di atas 15 tahun) yang meninggal akibat AIDS.
+
+* `Data.AIDS-Related Deaths.Male Adults`: Jumlah laki-laki dewasa (di atas 15 tahun) yang meninggal akibat AIDS.
+
+* `Data.HIV Prevalence.Adults`: Persentase populasi Pria Muda (15-49 tahun) yang menderita AIDS pada tahun ini.
+
+* `Data.HIV Prevalence.Young Men`: Persentase populasi Pria Muda (15-24 tahun) yang menderita AIDS pada tahun ini.
+
+* `Data.HIV Prevalence.Young Women`: Persentase populasi Wanita Muda (15-24 tahun) yang menderita AIDS pada tahun ini.
+
+* `Data.New HIV Infections.Adults`: Jumlah kasus AIDS yang dilaporkan pada semua orang dewasa (15+ tahun).
+
+* `Data.New HIV Infections.All Ages`: Jumlah total kasus AIDS yang dilaporkan pada tahun ini.
+
+* `Data.New HIV Infections.Children`: Jumlah kasus AIDS yang dilaporkan pada anak-anak (0-14 tahun).
+
+* `Data.New HIV Infections.Female Adults`: Jumlah kasus AIDS yang dilaporkan pada perempuan dewasa (15+ tahun).
+
+* `Data.New HIV Infections.Incidence Rate Among Adults`: Jumlah kasus AIDS yang dilaporkan pada orang dewasa (15-49 tahun).
+
+* `Data.New HIV Infections.Male Adults`: Jumlah kasus AIDS yang dilaporkan pada laki-laki dewasa (15+ tahun).
+
+* `Data.People Living with HIV.Adults`: Jumlah orang dewasa (di atas 15 tahun) yang menderita AIDS pada tahun ini.
+
+* `Data.People Living with HIV.Children`: Jumlah anak-anak (di bawah 15 tahun) yang menderita AIDS pada tahun ini.
+
+* `Data.People Living with HIV.Female Adults`: Jumlah perempuan dewasa (di atas 15 tahun) yang menderita AIDS pada tahun ini.
+
+* `Data.People Living with HIV.Male Adults`: Jumlah laki-laki dewasa (di atas 15 tahun) yang menderita AIDS pada tahun ini.
+
+* `Data.People Living with HIV.Total`: Jumlah total orang yang menderita AIDS pada tahun ini.
+
+
+
+
+Ada visualisasi yang akan ditampilkan adalah :
+* Melihat perkembangan aids di indonesia 
+
+# Membersihkan Data
+## Import Dataset
+
+```{r}
+# Import Dataset
+
+df_aids <- read.csv("aids.csv")
+
+```
+
+
+
+```{r}
+# Setelah kita mengimpor data, mari kita periksa strukturnya
+glimpse(df_aids)
+```
+
+```{r}
+# Check Missing Value
+colSums(is.na(df_aids))
+```
+Dikarenakan tidak ada missing value pada dataset ini maka lebih mudah untuk menganalisa proporsi kematian terhadap perempuan dan laki laki
+
+
+
+
+## Periksa Data, Setelah mengubah tipe data. Mari kita susun datanya agar kita bisa memvisualisasikannya
+
+```{r}
+# Check the first 10 rows of aids data that we have changed
+head(df_aids)
+```
+
+
+# Studi Kasus
+
+## Cases 1 
+
+Kita ingin melihat perkembangan AIDS di Indonesia: Tren Kematian (2005 - 2020)
+
+```{r}
+# kita filter kasus yang hanya ada di Indonesia lalu kita masukan ke nama data baru df_indo
+df_indo <- df_aids %>%
+  filter(Country == "Indonesia") %>%
+  filter(Year %in% c(2005, 2010, 2015, 2020))
+```
+
+
+
+```{r}
+
+ggplot(df_indo, aes(x = Year, y = Data.AIDS.Related.Deaths.All.Ages / 1000)) +
+  geom_line(color = "#3498DB") +  # Set line color
+  geom_point(size = 3, color = "#3498DB") +  # Add points with same color
+  geom_smooth(method = "lm", se = FALSE) +  # Add linear regression line
+  labs(
+    title = "Perkembangan AIDS di Indonesia (2005 - 2020)",
+    subtitle = "Jumlah Kematian Terkait AIDS (Semua Usia)",
+    x = "Tahun",
+    y = "Jumlah Kematian (ribuan)"  # Change label to "Jumlah Kematian (ribuan)"
+  ) +
+  theme_minimal() +
+  scale_color_discrete(name = "") +  # Remove color legend
+  theme(legend.position = "none")  # Hide legend
+
+
+
+```
+
+Insight yang kita peroleh adalah:
+
+- Kematian masyarakat di Indonesia mengalami lompatan yang sangat besar dari tahun 2010 ke tahun 2020 hanya waktu 10 tahun saja.
+
+-  Pada tahun 2020 total kematian mencapai lebih dari 23 ribu kematian, sebelumnya pada tahun 2010 sekitar 13 ribu kematian yang bearti peningkatan pesat sekitar hampir 100%
+
+
+## Cases 2
+
+Kita ingin melihat kematian dan survivor dalam hiv dan aids pada laki laki dan perempuan
+```{r}
+# Alasan mengapa kita menggunakan pivot yang lebih panjang adalah karena kolom tersebut hanyalah kolom yang berdiri sendiri sehingga kita harus memanjangkan datanya agar data tersebut memiliki kolom baru yang berguna untuk divisualisasikan.
+
+# Kami menggunakan sintaks True sehingga ggplot (Perpustakaan yang membuat visualisasi di r studio) dapat memisahkan antara kematian dan hidup.
+
+
+data_female_male_live_deaths <- df_indo %>% 
+  group_by(Year) %>% 
+  select(Year,`Data.People.Living.with.HIV.Male.Adults`,`Data.AIDS.Related.Deaths.Male.Adults`,`Data.People.Living.with.HIV.Female.Adults`,`Data.AIDS.Related.Deaths.Female.Adults`) %>% 
+  filter(Year %in% c(1990,1995,2000,2005,2010,2015)) %>% 
+  pivot_longer(-Year, names_to = "var", values_to = "value")
+
+data_female_male_live_deaths
+
+
+options(scipen = 999)
+
+data_female_male_live_deaths <- data_female_male_live_deaths %>%
+  mutate(
+    type = str_detect(string = var, pattern ="Deaths"),
+    type = ifelse(
+       type == TRUE, "Death", "Living"
+    ),
+      text = paste("Year:", Year,"\n",type,":",value
+                   ), Gender = str_detect(string = var, pattern ="Female"),
+                      Gender = ifelse(
+       Gender == TRUE, "Female", "Male"
+    )
+  )
+
+
+data_female_male_live_deaths
+
+  
+```
+
+
+Lalu kita memvisualisasikan dengan facetplot
+
+```{r}
+data_female_male_live_deaths$Year <- round(data_female_male_live_deaths$Year)
+
+# Plot
+ggplot(data_female_male_live_deaths, aes(x = Year, y = value, color = type, linetype = Gender)) +
+  geom_line() +
+  facet_wrap(~ Gender) +  # Wrap by Gender
+  labs(
+    title = "HIV/AIDS Living & Deaths in Indonesia (1990 - 2020)",
+    x = "Year",
+    y = "Value (in thousands)",
+    color = "Status",
+    linetype = "Gender"  # Adjust legend labels for clarity
+  ) +
+  theme_minimal() +
+  scale_linetype_manual(values = c("solid", "dashed"))  # Set linetype for genders
+  # Add tooltip text (optional)
+  # geom_text(aes(label = text), nudge_y = 1)  # Uncomment to add tooltip text
+  # Scale x-axis to display only whole years
+  scale_x_continuous(breaks = seq(1990, 2020, by = 1), labels = seq(1990, 2020, by = 1))
+
+```
+Insight yang kita peroleh adalah 
+
+- Pada tahun 2015 terdapat kesenjangan hidup yang sangat besar antara Laki-Laki dan Perempuan 181,701 yang bearti laki laki memiliki angka hidup 58% lebih tinggi dibandingkan perempuan. 
+
+- Kematian laki laki sedikit meningkat 82% dari tahun 2005 ke tahun 2010, yang berarti terjadi lompatan besar hanya dalam tahun.
+
+- Pada infeksi pertama(1990) perempuan dan laki laki tidak terlalu signifikan, namun pada tahun berikutnya (1995), infeksi laki laki tinggi yaitu sebelumnya 67 pada tahun 1990. Menjadi 2835 pada tahun 1995
