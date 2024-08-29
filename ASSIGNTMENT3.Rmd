@@ -1,0 +1,220 @@
+---
+title: "Sleep and Health Analysis"
+author: "Naura Shahieza Marasabessy"
+date: "2024-06-19"
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+NIM: '2602192115'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Introduction
+
+##### **Purpose and Context**
+The purpose of this report is to analyze sleep health and lifestyle data to understand patterns, relationships, and potential issues related to sleep. By exploring and analyzing this dataset, we aim to uncover insights that can help improve sleep quality and overall health.
+
+##### **Significance**
+Sleep is a critical component of overall health and well-being. Poor sleep can lead to various health issues, including cardiovascular diseases, diabetes, and mental health problems. Understanding factors that influence sleep duration and quality can help in developing interventions and recommendations to promote better sleep habits.
+
+##### **Intended Audience**
+This report is intended for lecturer, and finding related to sleep health and lifestyle factors.
+
+##### **Objectives**
+The main objectives of this analysis are:
+- To explore the dataset and understand the distribution and relationships between different variables.
+- To identify key factors that influence sleep duration and quality.
+- To perform statistical tests to determine significant differences and associations in the data.
+
+##### **Analytical Techniques**
+The methods and analytical techniques employed in this report include:
+- Exploratory Data Analysis (EDA) to summarize the main characteristics of the data.
+- Statistical tests such as t-tests, ANOVA, and Chi-Square tests to identify significant differences and associations.
+- Correlation analysis to explore relationships between numerical variables.
+
+##### **Assumptions and Limitations**
+Assumptions:
+- The dataset is assumed to be representative of the population it was collected from.
+- Missing values are assumed to be missing at random.
+
+Limitations:
+- The analysis is limited to the variables available in the dataset.
+- Causal relationships cannot be inferred from the analysis due to the observational nature of the data.
+
+
+### Data Description
+**Source**
+The dataset, titled "Sleep Health and Lifestyle Dataset," has been provided for the purpose of analyzing various factors related to sleep health and lifestyle. This dataset from kaggle and the collaborator is Laksika Tharmalingam.
+
+#### **Variables**
+The dataset includes the following variables:
+
+* `Person ID`: Unique identifier for each individual.
+* `Gender`: Male or Female.
+* `Age`: Age in years.
+* `Occupation`: Professional role of the individual.
+* `Sleep Duration (hours)`**: Number of hours slept per day.
+* `Quality of Sleep (scale: 1-10)`**: Subjective rating of sleep quality.
+* `Physical Activity Level (minutes/day)`: Daily physical activity in minutes.
+* `Stress Level (scale: 1-10)`: Subjective rating of stress level.
+* `BMI Category`: Underweight, Normal, Overweight.
+* `Blood Pressure (systolic/diastolic)`: Blood pressure measurement.
+* `Heart Rate (bpm)`: Resting heart rate in beats per minute.
+* `Daily Steps`: Number of steps taken per day.
+* `Sleep Disorder`: Type of sleep disorder, if any (None, Insomnia, Sleep Apnea).
+
+### Data Preprocessing
+
+```{r message=FALSE, warning=FALSE}
+library(ggthemes)
+library(scales)
+library(dplyr) 
+library(readr)
+library(tidyverse)
+library(ggplot2)
+```
+```{r}
+data<-read.csv("sleep.csv")
+str(data)
+```
+This syntax is for counts the number of NA values in each column of our dataset.
+```{r}
+colSums(is.na(data))
+```
+There is no missing value on this dataset
+
+This code performs several important steps in data preprocessing:
+Converts categorical variables to factors for better handling in statistical analyses.
+Splits a composite Blood.Pressure column into two separate numeric columns for systolic and diastolic pressure.
+Removes the original Blood.Pressure column to avoid redundancy.
+These steps are crucial for preparing the data for further analysis or modeling, ensuring that each variable is in the appropriate format for the tasks ahead.
+```{r}
+data <- data %>%
+  mutate(
+    Gender = as.factor(Gender),
+    Occupation = as.factor(Occupation),
+    Sleep.Disorder = as.factor(Sleep.Disorder),
+    BMI.Category = as.factor(BMI.Category),
+    Systolic_BP = as.numeric(sub("/.*", "", `Blood.Pressure`)),
+    Diastolic_BP = as.numeric(sub(".*/", "", `Blood.Pressure`))
+  ) %>%
+  select(-`Blood.Pressure`) # Remove the original Blood Pressure column
+
+```
+
+The first 10 data from our dataset
+```{r}
+head(data,n = 10)
+```
+
+### Data Exploration: 
+```{r}
+gender_counts <- table(data$Gender)
+print(gender_counts)
+
+occupation_counts <- table(data$Occupation)
+print(occupation_counts)
+
+sleep_disorder_counts <- table(data$Sleep.Disorder)
+print(sleep_disorder_counts)
+
+BMI_Category_counts<-table(data$BMI.Category)
+print(BMI_Category_counts)
+```
+This is summary from numerical data types
+```{r}
+# Explore numerical data distributions
+numeric_columns <-data %>% select_if(is.numeric)
+
+# Summary statistics for numerical columns
+summary(numeric_columns)
+```
+```{r}
+# Visualizations
+# Histogram of Sleep Duration
+ggplot(data, aes(x=Sleep.Duration)) +
+  geom_histogram(binwidth=0.5, fill="blue", color="black") +
+  labs(title="Histogram of Sleep Duration", x="Sleep Duration (hours)", y="Frequency")
+```
+```{r}
+# Boxplot of Sleep Duration by Gender
+ggplot(data, aes(x=Gender, y=Sleep.Duration)) +
+  geom_boxplot(fill="lightblue") +
+  labs(title="Boxplot of Sleep Duration by Gender", x="Gender", y="Sleep Duration (hours)")
+
+```
+```{r}
+# Scatter plot of Sleep Duration vs. Age
+ggplot(data, aes(x=Age, y=Sleep.Duration)) +
+  geom_point() +
+  geom_smooth(method="lm", se=FALSE, color="red") +
+  labs(title="Scatter Plot of Sleep Duration vs. Age", x="Age", y="Sleep Duration (hours)")
+
+```
+
+```{r}
+# Bar plot of Occupation
+ggplot(data, aes(x=Occupation)) +
+  geom_bar(fill="orange", color="black") +
+  labs(title="Bar Plot of Occupation", x="Occupation", y="Count") +
+  theme(axis.text.x = element_text(angle=45, hjust=1))
+```
+
+```{r}
+#Bar plot of BMI Category
+ggplot(data, aes(x=BMI.Category)) +
+  geom_bar(fill="green", color="black") +
+  labs(title="Bar Plot of BMI Category", x="BMI Category", y="Count")
+```
+
+```{r}
+# Bar plot of Sleep Disorder
+ggplot(data, aes(x=Sleep.Disorder)) +
+  geom_bar(fill="purple", color="black") +
+  labs(title="Bar Plot of Sleep Disorder", x="Sleep Disorder", y="Count")
+```
+### Statistical Analysis:
+```{r}
+# Compute the correlation matrix for numeric variables
+correlation_matrix <- cor(data %>% select_if(is.numeric))
+
+# Display the correlation matrix
+print(correlation_matrix)
+
+```
+```{r}
+# Perform t-test to compare sleep duration between genders
+t_test_result <- t.test(Sleep.Duration ~ Gender, data=data)
+
+# Display the t-test result
+print(t_test_result)
+
+```
+**Methodology:**
+The correlation matrix shows the Pearson correlation coefficients between pairs of numeric variables. Values close to 1 or -1 indicate strong linear relationships.
+
+**Interpretation:**
+Identify pairs of variables with high correlation values. For example, if Sleep Duration and Quality of Sleep have a high positive correlation, it suggests that better sleep quality is associated with longer sleep duration.
+
+
+```{r}
+# Perform Chi-Square test of independence between Gender and Sleep Disorder
+chi_square_result <- chisq.test(table(data$Gender, data$Sleep.Disorder))
+
+# Display the Chi-Square test result
+print(chi_square_result)
+```
+**Methodology:**
+The Chi-Square test assesses whether there is a significant association between two categorical variables (Gender and Sleep Disorder).
+
+**Interpretation:**
+Check the p-value in the Chi-Square test result. If the p-value is less than 0.05, it suggests a significant association between Gender and Sleep Disorder.
+
+**Conclusion**
+Summarize the key findings from the statistical analyses. Discuss any significant relationships or differences observed in the data. For instance:
+Correlation Analysis: Identify pairs of variables with strong correlation with each other features.
+
+
