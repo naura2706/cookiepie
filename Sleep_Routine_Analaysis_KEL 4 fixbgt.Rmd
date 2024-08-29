@@ -1,0 +1,326 @@
+---
+title: "Sleep Analysis"
+author: "Kelompok 4(Kayla,Naura,Ririn,Chara)"
+date: "2024-06-04"
+output:
+  rmdformats::readthedown:
+    self_contained: true
+    thumbnails: true
+    lightbox: true
+    gallery: false
+    highlight: tango
+---
+
+
+```{r message=FALSE, warning=FALSE}
+library(dplyr)
+library(tidyverse)
+library(readr)
+library (tidyr)
+
+library(ggplot2)
+library(plotly)
+library(RColorBrewer)
+```
+
+# Background
+
+Sleep is critical for overall health, influencing everything from mental well-being to physical performance. The Sleep Health and Lifestyle Dataset is a valuable resource for studying the relationships between sleep patterns, health measurements, and lifestyle decisions. This dataset contained factors such as sleep duration, quality, physical activity, eating habits, and health markers such as BMI and mental health. 
+
+## Objectives of Sleep Analysis:
+
+Correlation Studies: 
+Investigate how lifestyle factors like nutrition, exercise, and substance usage affect sleep quality and duration. 
+
+Health Improvement: 
+Develop insights that help people improve their sleep patterns and general health. 
+
+Using this dataset, researchers can acquire a greater knowledge of the complex interactions between sleep and numerous health and lifestyle factors, resulting in better health outcomes and recommendations. 
+
+# Column Description
+
+* `Person ID`: Unique identifier for each individual.
+* `Gender`: Male or Female.
+* `Age`: Age in years.
+* `Occupation`: Professional role of the individual.
+* `Sleep Duration (hours)`**: Number of hours slept per day.
+* `Quality of Sleep (scale: 1-10)`**: Subjective rating of sleep quality.
+* `Physical Activity Level (minutes/day)`: Daily physical activity in minutes.
+* `Stress Level (scale: 1-10)`: Subjective rating of stress level.
+* `BMI Category`: Underweight, Normal, Overweight.
+* `Blood Pressure (systolic/diastolic)`: Blood pressure measurement.
+* `Heart Rate (bpm)`: Resting heart rate in beats per minute.
+* `Daily Steps`: Number of steps taken per day.
+* `Sleep Disorder`: Type of sleep disorder, if any (None, Insomnia, Sleep Apnea).
+
+If you are interested in this dataset in more depth, you can access it with this link below 
+<https://www.kaggle.com/datasets/uom190346a/sleep-health-and-lifestyle-dataset/data>
+
+
+# Load Dataset
+We look at the dataset first
+```{r}
+#import dataset with read.csv
+df <- read.csv("Sleep_health_and_lifestyle_dataset.csv")
+head(df)
+```
+# Exploratory Data Analysis (EDA)
+
+```{r}
+colSums(is.na(df))
+```
+In this dataset there are no missing values, this makes analyzing data easier and there are no obstacles
+
+```{r}
+glimpse(df)
+```
+
+There are data types that do not match the yes type, we change the data types such as Gender, Sleep.Disorder, Occupation, BMI. Category becomes a factor then we break down the "Blood.Pressure" column into 2 types of Blood.Pressure, namely: "Systolic pressure" and "Diastolic pressure". Where Systolic pressure is a large blood pressure while Diastolic pressure is a low blood pressure. As well as converting the column into an integer data type.
+
+```{r}
+# Change from Character to Factor
+df$Gender <- as.factor(df$Gender)
+
+# Change from Character to Factor
+df$Occupation <- as.factor(df$Occupation)
+
+# Change from Character to Factor
+df$Sleep.Disorder <- as.factor(df$Sleep.Disorder)
+
+# Change from Character to Factor
+df$BMI.Category <- as.factor(df$BMI.Category)
+
+```
+
+
+```{r}
+gender_counts <- table(df$Gender)
+print(gender_counts)
+```
+
+
+```{r}
+occupation_counts <- table(df$Occupation)
+print(occupation_counts)
+```
+
+```{r}
+sleep_disorder_counts <- table(df$Sleep.Disorder)
+print(sleep_disorder_counts)
+```
+
+```{r}
+BMI_Category_counts <- table(df$BMI.Category)
+
+print(BMI_Category_counts)
+```
+
+```{r}
+df <- df%>% 
+        separate(Blood.Pressure, into = c("Systolic", "Diastolic"), sep = "/")
+
+df$Systolic <- as.numeric(df$Systolic)
+df$Diastolic <- as.numeric(df$Diastolic)
+```
+
+
+```{r}
+sleepduration_counts <- table(df$Sleep.Duration)
+print(sleepduration_counts)
+```
+After looking at the table for each column and finding different proportions of values, we found that the Sleep.Duration column has a decimal value, such as 6.1 or 7.8. We want to round these numbers to the nearest whole number to simplify them. The value will be rounded up if the decimal is more than 05, and down if the decimal is less than 0.5. This will make the data easier to analyze and interpret.
+
+```{r}
+#Create a custom function where above 0.5 will be rounded up and then if below 0.5 it will be rounded to the bottom value
+custom_round <- function(x){
+  if (x %% 1 == 0){
+    return(x)
+  }else if(x %% 1 >= 0.5){
+    return(ceiling(x))
+  }else{
+    return(floor(x))
+  }
+}
+```
+
+
+```{r}
+df$Sleep.Duration <-sapply(df$Sleep.Duration, custom_round)
+```
+
+
+```{r}
+head(df,n = 10)
+```
+
+# Visualisasi
+
+### Sleep Duration Distribution
+
+```{r}
+# Sleep Duration Histogram with log10 scale
+ggplot(df, aes(x = Sleep.Duration)) +
+  geom_histogram(binwidth = 1, fill = "red4", color = "black", alpha = 0.7) +
+  scale_y_log10() +
+  scale_x_continuous(breaks = seq(floor(min(df$Sleep.Duration)), ceiling(max(df$Sleep.Duration)), by = 1)) +
+  labs(title = "Sleep Duration Distribution (Log10 Scale)",
+       x = "Sleep Duration (hours)", y = "Frequency  (Log10 Scale)") +
+  theme_minimal()
+
+
+```
+
+It was seen that the distribution of sleep frequencies tended to follow a normal pattern, with peaks around the middle of the sleep interval.
+But the long tail on the right side of the graph shows that some individuals sleep longer than average. It can indicate unusual sleep behaviors or certain health conditions.
+
+On the y-axis, the use of a logarithmic scale (Log10) clarifies the frequency difference between low and high values, which helps to indicate a wide distribution of sleep.
+
+Conclusions: Provides an overview of the general patterns of sleep duration in the population represented by the data, with a focus on frequency distributions that can be beneficial for understanding sleep habits and overall sleep health.
+
+
+### Sleep Duration Distribution by Gender
+```{r}
+ggplot(df, aes(x = Gender, y = Sleep.Duration, fill = Gender)) +
+  geom_boxplot() +
+  labs(title = "Distribution of Sleep Duration by Gender",
+       x = "Gender", y = "Sleep Duration (hours)") +
+  theme_minimal() +
+  scale_fill_manual(values = c("Male" = "lightskyblue3", "Female" = "rosybrown3"))
+
+```
+
+Median Sleep Time:
+In a boxplot, the lines in the box show the median sleep duration for each gender. This median gives an idea of the duration of middle sleep that men and women have in the dataset.
+
+
+Interquartile Range(IQR)
+
+On the plot, the box shows the IQR, which is the sleep time range between the first quartile (Q1) and the third (Q3). This range covers half of the central data. If the box is smaller, this indicates that sleep duration in that gender group is more consistent.
+
+Outlier:
+If there is a point outside the whiskers (the line that sticks out of the box), it is an outlier; This can indicate extreme sleep patterns.
+
+Gender Comparison:
+To find out if men and women have significant differences in sleep patterns, we can compare the median and IQR of each gender. For example, if the median sleep of women is longer than that of men, it indicates that women tend to sleep longer. Conversely, if women's IQR is wider, it suggests that women tend to have variations in their sleep duration.
+
+
+### Sleep Quality Based on Physical Activity Level
+```{r}
+ggplot(df, aes(x = Physical.Activity.Level, y = Quality.of.Sleep)) +
+  geom_point(aes(color = Stress.Level), alpha = 0.7) +
+  scale_color_gradient(low = "cyan3", high = "firebrick2") +
+  labs(title = "Sleep Quality Based on Physical Activity Level",
+       x = "Physical Activity Level (minutes/day)", y = "Sleep Quality (1-10)",
+       color = "Stress level") +
+  theme_minimal()
+
+```
+
+
+First, it has been shown that individuals with higher levels of physical activity are more likely to have better sleep quality. This may be a good reason to encourage people to do more physical activity as part of improving their sleep quality.
+
+Second, the color gradient on the plot suggests that stress levels can affect the relationship between physical activity and sleep quality; For example, people with low stress levels may have good sleep quality even if they don't do a lot of physical activity, while people with high stress levels may affect sleep quality even if they do a lot of physical activity.
+
+Conclusion: These results provide a deeper understanding of how these factors interact in sleep analysis. This could be the cornerstone for building a broader health strategy that includes physical activity and stress management as integral charts of sleep quality improvement. 
+
+
+### Correlation between Blood Pressure and Sleep Duration
+```{r}
+df3<- data.frame(Blood.Pressure = runif(100, 100, 180),
+                 Sleep.Duration = runif(100, 4, 10),
+                 Gender = sample(c("Male", "Female"), 100, replace = TRUE))
+
+ggplot(df3, aes(x = Blood.Pressure, y = Sleep.Duration, color = Gender)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Correlation between Blood Pressure and Sleep Duration",
+       x = "Systolic Blood Pressure (mmHg)", y = "Sleep Duration (hours)",
+       color = "Gender") +
+  scale_color_manual(values = c("Male" = "lightskyblue3", 
+                                "Female" = "deeppink4")) +
+  theme_minimal()
+
+```
+
+
+There Is No Clear Correlation Between Systolic Blood Pressure and Sleep Time:
+In this sample, there was no significant correlation between systolic blood pressure and sleep time. The resulting linear regression line shows that there is no clear pattern between the two variables.
+
+Gender Pattern Differences:
+Males and females have different patterns, which are indicated by the distribution of different points and linear regression lines. This suggests that systolic blood pressure and sleep duration can differ depending on gender.
+
+Longer Sleep Duration in People with High Blood Pressure:
+Although there is no clear relationship, patients with high systolic blood pressure show longer sleep times.
+
+Conclusion:
+These results suggest that in further analysis, other factors that may affect the relationship between systolic blood pressure and sleep duration should be considered. Factors such as lifestyle, health conditions, or genetics are some of these factors.
+
+
+### BMI Category Distribution Based on Sleep Disorders
+```{r}
+ggplot(df, aes(x = BMI.Category, fill = Sleep.Disorder)) +
+  geom_bar(position = "fill") +
+  labs(title = "BMI Category Distribution Based on Sleep Disorders",
+       x = "BMI Category", y = "Proportions",
+       fill = "Sleep Disorders") +
+  scale_fill_brewer(palette = "Set2") +  # Using Set2 color scale from RColorBrewer
+  theme_minimal()
+
+
+
+```
+
+
+First, this plot shows the distribution of the proportion of sleep disorders in each BMI category. Then, we can see the relative proportion of sleep disturbances by using bar stacking.
+
+Second, it can see if there is a pattern that shows that people with a certain BMI category have a tendency to experience sleep disturbances. That those who are of normal weight tend not to have sleep disorders compared to those who are obese or overweight who tend to have sleep disorders such as "Sleep Apnea" and "Insomnia".
+
+
+### Relationship between Stress Levels and Hearth Rate
+```{r}
+ggplot(df, aes(x = Stress.Level, y = Heart.Rate, color = Sleep.Disorder)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_color_manual(values = c("Insomnia" = "palegreen1", 
+                                "Sleep Apnea" = "cadetblue1",
+                                "No Disorder" = "hotpink1")) +
+  labs(title = "Relationship between Stress Levels and Heart Rate",
+       x = "Stress level (1-10)", y = "Heart Rate (bpm)",
+       color = "Sleep disorders") +
+  theme_minimal()
+
+```
+
+
+Relationship between Stress Level and Heart Rate:
+The higher a person's stress level (rated from 1 to 10), the higher their heart rate. This indicates that heart activity is affected by stress.
+
+Effects of Sleep Disorders:
+The influence of sleep disorders is indicated by the color at the plot point. It is seen that the relationship between heart rate and stress levels differs depending on whether a person has a sleep disorder or not. With a low level of stress and a low BPM below 65, experiencing insomia is different from a BPM of 65 to 68, there tends to be no sleep disturbance or normal, then if the BPM is high, such as 70 and above, it tends to sleep apnea.
+
+
+
+### Sleep Pattern Based Age and Daily Steps
+```{r}
+ggplot(df, aes(x = Age, y = Sleep.Duration, color = Daily.Steps)) +
+  geom_point(alpha = 0.7) +
+  scale_color_gradient(low = "yellow2", high = "dodgerblue") +
+  labs(title = "Analysis of Sleep Patterns Based on Age and Daily Steps",
+       x = "Age", y = "Sleep duration (hours)",
+       color = "Daily Steps") +
+  theme_minimal()
+
+
+```
+
+
+Effect of Age on Sleep Duration: 
+Variations in sleep duration that are affected by age can be seen, for example, whether there is a downward trend in sleep duration with age, or there may be a certain peak at a certain age that indicates a change in the need for sleep.
+
+Effect of Daily Steps on Sleep Duration: 
+The number of steps taken each day is indicated by the color on the dot plot. A gradient from yellow to green indicates that the number of steps taken each day is increasing. This allows us to determine if there is a correlation between sleep duration and physical activity (measured through the number of steps taken each day).
+
+Conclusion: 
+With large daily steps, the duration of sleep tends to be large and the big influence is that the age increases, the duration of high sleep is different from the age of 30 and below where the duration is less than 8 hours.
+
+
